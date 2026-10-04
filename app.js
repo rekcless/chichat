@@ -21,11 +21,12 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-console.log("✅ app.js berhasil dimuat");
+console.log("🔥 Chat app loaded");
 
-// ===============================
+
+// =====================================================
 // ELEMENT
-// ===============================
+// =====================================================
 
 const authSection = document.getElementById("authSection");
 const friendSection = document.getElementById("friendSection");
@@ -48,43 +49,45 @@ const chatMessage = document.getElementById("chatMessage");
 const sendChatBtn = document.getElementById("sendChatBtn");
 
 
-// ===============================
-// CEK ELEMENT
-// ===============================
-
-console.log({
-  loginBtn,
-  registerBtn,
-  usernameAuth,
-  passwordAuth
-});
-
-if (!loginBtn || !registerBtn) {
-  alert("❌ Tombol login/daftar tidak ditemukan. Cek ID di index.html.");
-}
-
-
-// ===============================
-// STATUS
-// ===============================
+// =====================================================
+// VARIABLES
+// =====================================================
 
 let currentUser = null;
 let currentProfile = null;
+
 let selectedFriend = null;
+
 let unsubscribeMessages = null;
 
 
-// ===============================
+// =====================================================
 // HELPER
-// ===============================
+// =====================================================
+
+function cleanUsername(username) {
+  return username
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "");
+}
+
+
+function usernameToEmail(username) {
+  return `${username.toLowerCase().trim()}@chating-78345.firebaseapp.com`;
+}
+
 
 function showError(message) {
+
   console.error(message);
 
   let box = document.getElementById("errorBox");
 
   if (!box) {
+
     box = document.createElement("div");
+
     box.id = "errorBox";
 
     box.style.cssText = `
@@ -96,10 +99,9 @@ function showError(message) {
       background:#fee2e2;
       color:#991b1b;
       padding:15px;
-      border-radius:12px;
+      border-radius:14px;
       font-size:14px;
       box-shadow:0 10px 30px rgba(0,0,0,.15);
-      border:1px solid #fecaca;
     `;
 
     document.body.appendChild(box);
@@ -110,302 +112,367 @@ function showError(message) {
 
 
 function clearError() {
+
   const box = document.getElementById("errorBox");
+
   if (box) box.remove();
+
 }
 
 
-function usernameToEmail(username) {
-  return `${username.toLowerCase().trim()}@chating-78345.firebaseapp.com`;
+// =====================================================
+// DATE FORMAT
+// =====================================================
+
+function getDateKey(timestamp) {
+
+  if (!timestamp) {
+    return "";
+  }
+
+  const date = timestamp.toDate
+    ? timestamp.toDate()
+    : new Date(timestamp);
+
+  return [
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  ].join("-");
 }
 
 
-function cleanUsername(username) {
-  return username
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "");
+function formatDay(timestamp) {
+
+  if (!timestamp) {
+    return "";
+  }
+
+  const date = timestamp.toDate
+    ? timestamp.toDate()
+    : new Date(timestamp);
+
+  const now = new Date();
+
+  const todayKey = getDateKey(now);
+  const messageKey = getDateKey(date);
+
+  if (messageKey === todayKey) {
+    return "Hari ini";
+  }
+
+  const yesterday = new Date();
+
+  yesterday.setDate(
+    yesterday.getDate() - 1
+  );
+
+  if (messageKey === getDateKey(yesterday)) {
+    return "Kemarin";
+  }
+
+  return date.toLocaleDateString(
+    "id-ID",
+    {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    }
+  );
 }
 
 
-// ===============================
+function formatTime(timestamp) {
+
+  if (!timestamp) {
+    return "";
+  }
+
+  const date = timestamp.toDate
+    ? timestamp.toDate()
+    : new Date(timestamp);
+
+  return date.toLocaleTimeString(
+    "id-ID",
+    {
+      hour: "2-digit",
+      minute: "2-digit"
+    }
+  );
+}
+
+
+// =====================================================
 // REGISTER
-// ===============================
+// =====================================================
 
-registerBtn?.addEventListener("click", async () => {
+registerBtn?.addEventListener(
+  "click",
+  async () => {
 
-  console.log("🟢 Tombol DAFTAR ditekan");
+    clearError();
 
-  clearError();
+    const username =
+      cleanUsername(usernameAuth.value);
 
-  const username = cleanUsername(usernameAuth.value);
-  const password = passwordAuth.value;
+    const password =
+      passwordAuth.value;
 
-  if (!username) {
-    showError("Username wajib diisi.");
-    return;
-  }
-
-  if (username.length < 3) {
-    showError("Username minimal 3 karakter.");
-    return;
-  }
-
-  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-    showError("Username hanya boleh huruf, angka, dan underscore.");
-    return;
-  }
-
-  if (!password) {
-    showError("Password wajib diisi.");
-    return;
-  }
-
-  if (password.length < 6) {
-    showError("Password minimal 6 karakter.");
-    return;
-  }
-
-  const email = usernameToEmail(username);
-
-  registerBtn.disabled = true;
-  registerBtn.textContent = "Mendaftar...";
-
-  try {
-
-    console.log("Membuat akun:", email);
-
-    // Cek username
-    const usernameRef = doc(db, "usernames", username);
-    const usernameSnap = await getDoc(usernameRef);
-
-    if (usernameSnap.exists()) {
-      throw new Error("Username sudah digunakan.");
+    if (!username) {
+      showError("Username wajib diisi.");
+      return;
     }
 
-    // Buat akun Firebase Authentication
-    const credential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-
-    const uid = credential.user.uid;
-
-    console.log("✅ Auth berhasil:", uid);
-
-    // Simpan profile
-    await setDoc(doc(db, "users", uid), {
-      uid: uid,
-      username: username,
-      friends: [],
-      createdAt: serverTimestamp()
-    });
-
-    // Simpan username mapping
-    await setDoc(doc(db, "usernames", username), {
-      uid: uid
-    });
-
-    alert("✅ Pendaftaran berhasil!");
-
-    usernameAuth.value = "";
-    passwordAuth.value = "";
-
-  } catch (error) {
-
-    console.error("REGISTER ERROR:", error);
-
-    let message = error.message;
-
-    switch (error.code) {
-
-      case "auth/email-already-in-use":
-        message = "Username tersebut sudah terdaftar.";
-        break;
-
-      case "auth/weak-password":
-        message = "Password terlalu lemah. Minimal 6 karakter.";
-        break;
-
-      case "auth/invalid-email":
-        message = "Format username tidak valid.";
-        break;
-
-      case "permission-denied":
-        message = "Firestore menolak akses. Cek Firestore Rules.";
-        break;
-
-      case "failed-precondition":
-        message = "Firebase belum dikonfigurasi dengan benar.";
-        break;
+    if (username.length < 3) {
+      showError("Username minimal 3 karakter.");
+      return;
     }
 
-    showError("❌ " + message);
-
-  } finally {
-
-    registerBtn.disabled = false;
-    registerBtn.textContent = "Daftar";
-
-  }
-
-});
-
-
-// ===============================
-// LOGIN
-// ===============================
-
-loginBtn?.addEventListener("click", async () => {
-
-  console.log("🟢 Tombol MASUK ditekan");
-
-  clearError();
-
-  const username = cleanUsername(usernameAuth.value);
-  const password = passwordAuth.value;
-
-  if (!username) {
-    showError("Username wajib diisi.");
-    return;
-  }
-
-  if (!password) {
-    showError("Password wajib diisi.");
-    return;
-  }
-
-  const email = usernameToEmail(username);
-
-  loginBtn.disabled = true;
-  loginBtn.textContent = "Masuk...";
-
-  try {
-
-    console.log("Login:", email);
-
-    await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-
-    console.log("✅ Login berhasil");
-
-    usernameAuth.value = "";
-    passwordAuth.value = "";
-
-  } catch (error) {
-
-    console.error("LOGIN ERROR:", error);
-
-    let message = error.message;
-
-    switch (error.code) {
-
-      case "auth/invalid-credential":
-        message = "Username atau password salah.";
-        break;
-
-      case "auth/user-not-found":
-        message = "Username belum terdaftar.";
-        break;
-
-      case "auth/wrong-password":
-        message = "Password salah.";
-        break;
-
-      case "auth/too-many-requests":
-        message = "Terlalu banyak percobaan. Coba lagi nanti.";
-        break;
-
-      case "auth/network-request-failed":
-        message = "Tidak ada koneksi internet.";
-        break;
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      showError(
+        "Username hanya boleh huruf, angka, dan underscore."
+      );
+      return;
     }
 
-    showError("❌ " + message);
+    if (!password) {
+      showError("Password wajib diisi.");
+      return;
+    }
 
-  } finally {
+    if (password.length < 6) {
+      showError(
+        "Password minimal 6 karakter."
+      );
+      return;
+    }
 
-    loginBtn.disabled = false;
-    loginBtn.textContent = "Masuk";
+    const email =
+      usernameToEmail(username);
 
-  }
-
-});
-
-
-// ===============================
-// AUTH STATE
-// ===============================
-
-onAuthStateChanged(auth, async (user) => {
-
-  console.log("AUTH STATE:", user);
-
-  if (user) {
-
-    currentUser = user;
-
-    console.log("✅ User login:", user.uid);
-
-    authSection.style.display = "none";
-    friendSection.style.display = "block";
-    chatSection.style.display = "none";
+    registerBtn.disabled = true;
+    registerBtn.textContent = "Mendaftar...";
 
     try {
 
-      const profileRef = doc(db, "users", user.uid);
-      const profileSnap = await getDoc(profileRef);
+      const usernameRef =
+        doc(db, "usernames", username);
+
+      const usernameSnap =
+        await getDoc(usernameRef);
+
+      if (usernameSnap.exists()) {
+        throw new Error(
+          "Username sudah digunakan."
+        );
+      }
+
+      const credential =
+        await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+
+      const uid =
+        credential.user.uid;
+
+      await setDoc(
+        doc(db, "users", uid),
+        {
+          uid: uid,
+          username: username,
+          friends: [],
+          createdAt: serverTimestamp()
+        }
+      );
+
+      await setDoc(
+        doc(db, "usernames", username),
+        {
+          uid: uid
+        }
+      );
+
+      alert(
+        "Pendaftaran berhasil!"
+      );
+
+      usernameAuth.value = "";
+      passwordAuth.value = "";
+
+    } catch (error) {
+
+      console.error(error);
+
+      showError(
+        "❌ " + error.message
+      );
+
+    } finally {
+
+      registerBtn.disabled = false;
+      registerBtn.textContent = "Daftar";
+
+    }
+
+  }
+);
+
+
+// =====================================================
+// LOGIN
+// =====================================================
+
+loginBtn?.addEventListener(
+  "click",
+  async () => {
+
+    clearError();
+
+    const username =
+      cleanUsername(usernameAuth.value);
+
+    const password =
+      passwordAuth.value;
+
+    if (!username) {
+      showError("Username wajib diisi.");
+      return;
+    }
+
+    if (!password) {
+      showError("Password wajib diisi.");
+      return;
+    }
+
+    const email =
+      usernameToEmail(username);
+
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Masuk...";
+
+    try {
+
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+    } catch (error) {
+
+      console.error(error);
+
+      let message =
+        "Username atau password salah.";
+
+      if (
+        error.code ===
+        "auth/network-request-failed"
+      ) {
+        message =
+          "Koneksi internet bermasalah.";
+      }
+
+      showError("❌ " + message);
+
+    } finally {
+
+      loginBtn.disabled = false;
+      loginBtn.textContent = "Masuk";
+
+    }
+
+  }
+);
+
+
+// =====================================================
+// AUTH STATE
+// =====================================================
+
+onAuthStateChanged(
+  auth,
+  async (user) => {
+
+    if (!user) {
+
+      currentUser = null;
+      currentProfile = null;
+
+      authSection.style.display =
+        "flex";
+
+      friendSection.style.display =
+        "none";
+
+      chatSection.style.display =
+        "none";
+
+      return;
+    }
+
+    currentUser = user;
+
+    authSection.style.display =
+      "none";
+
+    friendSection.style.display =
+      "block";
+
+    chatSection.style.display =
+      "none";
+
+    try {
+
+      const profileSnap =
+        await getDoc(
+          doc(db, "users", user.uid)
+        );
 
       if (!profileSnap.exists()) {
-        showError("Profile user tidak ditemukan.");
+        showError(
+          "Profile user tidak ditemukan."
+        );
         return;
       }
 
-      currentProfile = profileSnap.data();
-
-      console.log("PROFILE:", currentProfile);
+      currentProfile =
+        profileSnap.data();
 
       loadFriends();
 
     } catch (error) {
 
       console.error(error);
-      showError("Gagal mengambil data user dari Firestore.");
+
+      showError(
+        "Gagal memuat profile."
+      );
 
     }
 
-  } else {
-
-    currentUser = null;
-    currentProfile = null;
-
-    authSection.style.display = "block";
-    friendSection.style.display = "none";
-    chatSection.style.display = "none";
-
   }
+);
 
-});
 
-
-// ===============================
+// =====================================================
 // LOAD FRIENDS
-// ===============================
+// =====================================================
 
 async function loadFriends() {
 
   friendList.innerHTML = "";
 
-  const friends = currentProfile?.friends || [];
+  const friends =
+    currentProfile?.friends || [];
 
   if (friends.length === 0) {
 
     friendList.innerHTML = `
-      <li style="padding:15px;color:#777;">
+      <li class="empty-friends">
         Belum ada teman.
       </li>
     `;
@@ -417,28 +484,58 @@ async function loadFriends() {
 
     try {
 
-      const snap = await getDoc(doc(db, "users", uid));
+      const snap =
+        await getDoc(
+          doc(db, "users", uid)
+        );
 
       if (!snap.exists()) continue;
 
-      const friend = snap.data();
+      const friend =
+        snap.data();
 
-      const li = document.createElement("li");
+      const li =
+        document.createElement("li");
 
       li.innerHTML = `
         <button class="friend-item">
-          ${friend.username}
+
+          <span class="friend-avatar">
+            ${friend.username
+              .charAt(0)
+              .toUpperCase()}
+          </span>
+
+          <span class="friend-info">
+            <strong>
+              ${friend.username}
+            </strong>
+
+            <small>
+              Klik untuk membuka chat
+            </small>
+          </span>
+
+          <span class="friend-arrow">
+            ›
+          </span>
+
         </button>
       `;
 
-      li.querySelector("button").addEventListener("click", () => {
+      li.querySelector(
+        ".friend-item"
+      ).addEventListener(
+        "click",
+        () => {
 
-        openChat({
-          uid: uid,
-          username: friend.username
-        });
+          openChat({
+            uid: uid,
+            username: friend.username
+          });
 
-      });
+        }
+      );
 
       friendList.appendChild(li);
 
@@ -453,110 +550,137 @@ async function loadFriends() {
 }
 
 
-// ===============================
+// =====================================================
 // ADD FRIEND
-// ===============================
+// =====================================================
 
-addFriendBtn?.addEventListener("click", async () => {
+addFriendBtn?.addEventListener(
+  "click",
+  async () => {
 
-  clearError();
+    clearError();
 
-  const username = cleanUsername(searchUser.value);
+    const username =
+      cleanUsername(searchUser.value);
 
-  if (!username) {
-    showError("Masukkan username teman.");
-    return;
-  }
-
-  if (username === currentProfile.username) {
-    showError("Kamu tidak bisa menambahkan diri sendiri.");
-    return;
-  }
-
-  try {
-
-    const usernameSnap = await getDoc(
-      doc(db, "usernames", username)
-    );
-
-    if (!usernameSnap.exists()) {
-      showError("Username tidak ditemukan.");
+    if (!username) {
+      showError(
+        "Masukkan username teman."
+      );
       return;
     }
 
-    const friendUid = usernameSnap.data().uid;
-
-    const friendRef = doc(db, "users", friendUid);
-    const friendSnap = await getDoc(friendRef);
-
-    if (!friendSnap.exists()) {
-      showError("Data user tidak ditemukan.");
+    if (
+      username ===
+      currentProfile.username
+    ) {
+      showError(
+        "Kamu tidak bisa menambahkan diri sendiri."
+      );
       return;
     }
 
-    await updateDoc(
-      doc(db, "users", currentUser.uid),
-      {
-        friends: arrayUnion(friendUid)
+    try {
+
+      const usernameSnap =
+        await getDoc(
+          doc(db, "usernames", username)
+        );
+
+      if (!usernameSnap.exists()) {
+
+        showError(
+          "Username tidak ditemukan."
+        );
+
+        return;
       }
-    );
 
-    await updateDoc(
-      doc(db, "users", friendUid),
-      {
-        friends: arrayUnion(currentUser.uid)
-      }
-    );
+      const friendUid =
+        usernameSnap.data().uid;
 
-    currentProfile.friends = [
-      ...(currentProfile.friends || []),
-      friendUid
-    ];
+      await updateDoc(
+        doc(db, "users", currentUser.uid),
+        {
+          friends:
+            arrayUnion(friendUid)
+        }
+      );
 
-    searchUser.value = "";
+      await updateDoc(
+        doc(db, "users", friendUid),
+        {
+          friends:
+            arrayUnion(currentUser.uid)
+        }
+      );
 
-    alert("✅ Teman berhasil ditambahkan!");
+      currentProfile.friends =
+        Array.from(
+          new Set([
+            ...(currentProfile.friends || []),
+            friendUid
+          ])
+        );
 
-    loadFriends();
+      searchUser.value = "";
 
-  } catch (error) {
+      alert(
+        "Teman berhasil ditambahkan!"
+      );
 
-    console.error("ADD FRIEND ERROR:", error);
+      loadFriends();
 
-    showError(
-      "❌ Gagal menambahkan teman: " +
-      error.message
-    );
+    } catch (error) {
+
+      console.error(error);
+
+      showError(
+        "Gagal menambahkan teman."
+      );
+
+    }
 
   }
+);
 
-});
 
+// =====================================================
+// CONVERSATION ID
+// =====================================================
 
-// ===============================
-// CHAT
-// ===============================
+function conversationId(
+  uid1,
+  uid2
+) {
 
-function conversationId(uid1, uid2) {
-
-  return [uid1, uid2]
+  return [
+    uid1,
+    uid2
+  ]
     .sort()
     .join("_");
 
 }
 
 
+// =====================================================
+// OPEN CHAT
+// =====================================================
+
 async function openChat(friend) {
 
   selectedFriend = friend;
 
-  chatSection.style.display = "block";
+  chatSection.style.display =
+    "block";
 
-  chatWithName.textContent = friend.username;
+  chatWithName.textContent =
+    friend.username;
 
   chatBox.innerHTML = `
-    <div style="text-align:center;color:#777;padding:20px;">
-      Memuat chat...
+    <div class="chat-loading">
+      Memuat pesan...
     </div>
   `;
 
@@ -564,98 +688,343 @@ async function openChat(friend) {
     unsubscribeMessages();
   }
 
-  const convId = conversationId(
-    currentUser.uid,
-    friend.uid
-  );
+  const convId =
+    conversationId(
+      currentUser.uid,
+      friend.uid
+    );
 
-  const conversationRef = doc(
-    db,
-    "conversations",
-    convId
-  );
+  const conversationRef =
+    doc(
+      db,
+      "conversations",
+      convId
+    );
 
   try {
 
-    const snap = await getDoc(conversationRef);
+    const snap =
+      await getDoc(
+        conversationRef
+      );
 
     if (!snap.exists()) {
 
-      await setDoc(conversationRef, {
-        participants: [
-          currentUser.uid,
-          friend.uid
-        ],
-        updatedAt: serverTimestamp()
-      });
+      await setDoc(
+        conversationRef,
+        {
+          participants: [
+            currentUser.uid,
+            friend.uid
+          ],
+          updatedAt:
+            serverTimestamp()
+        }
+      );
 
     }
 
-    const messagesRef = collection(
-      db,
-      "conversations",
-      convId,
-      "messages"
-    );
+    const messagesRef =
+      collection(
+        db,
+        "conversations",
+        convId,
+        "messages"
+      );
 
-    const messagesQuery = query(
-      messagesRef,
-      orderBy("createdAt", "asc")
-    );
+    const messagesQuery =
+      query(
+        messagesRef,
+        orderBy(
+          "createdAt",
+          "asc"
+        )
+      );
 
-    unsubscribeMessages = onSnapshot(
-      messagesQuery,
-      (snapshot) => {
+    unsubscribeMessages =
+      onSnapshot(
+        messagesQuery,
+        async (snapshot) => {
 
-        chatBox.innerHTML = "";
+          chatBox.innerHTML = "";
 
-        snapshot.forEach((docSnap) => {
+          let previousDate = "";
 
-          const message = docSnap.data();
+          const unreadMessages = [];
 
-          const div = document.createElement("div");
+          snapshot.forEach(
+            (messageDoc) => {
 
-          div.style.cssText = `
-            padding:10px 14px;
-            margin:6px 0;
-            border-radius:12px;
-            max-width:75%;
-            word-break:break-word;
-            ${
-              message.senderUid === currentUser.uid
-              ? "margin-left:auto;background:#6c5ce7;color:white;"
-              : "margin-right:auto;background:#eee;color:#222;"
+              const message =
+                messageDoc.data();
+
+              const messageDate =
+                message.createdAt;
+
+              const dateKey =
+                getDateKey(
+                  messageDate
+                );
+
+              // =========================
+              // DATE SEPARATOR
+              // =========================
+
+              if (
+                dateKey !==
+                previousDate
+              ) {
+
+                const dateDivider =
+                  document.createElement(
+                    "div"
+                  );
+
+                dateDivider.className =
+                  "date-divider";
+
+                dateDivider.innerHTML = `
+                  <span>
+                    ${formatDay(
+                      messageDate
+                    )}
+                  </span>
+                `;
+
+                chatBox.appendChild(
+                  dateDivider
+                );
+
+                previousDate =
+                  dateKey;
+              }
+
+
+              // =========================
+              // MESSAGE
+              // =========================
+
+              const isMine =
+                message.senderUid ===
+                currentUser.uid;
+
+              const messageWrapper =
+                document.createElement(
+                  "div"
+                );
+
+              messageWrapper.className =
+                isMine
+                  ? "message-row mine"
+                  : "message-row theirs";
+
+
+              const bubble =
+                document.createElement(
+                  "div"
+                );
+
+              bubble.className =
+                "message-bubble";
+
+
+              const text =
+                document.createElement(
+                  "div"
+                );
+
+              text.className =
+                "message-text";
+
+              text.textContent =
+                message.text;
+
+
+              const meta =
+                document.createElement(
+                  "div"
+                );
+
+              meta.className =
+                "message-meta";
+
+
+              const time =
+                document.createElement(
+                  "span"
+                );
+
+              time.className =
+                "message-time";
+
+              time.textContent =
+                formatTime(
+                  message.createdAt
+                );
+
+
+              meta.appendChild(
+                time
+              );
+
+
+              // =========================
+              // READ RECEIPT
+              // =========================
+
+              if (isMine) {
+
+                const status =
+                  document.createElement(
+                    "span"
+                  );
+
+                status.className =
+                  "message-status";
+
+                if (message.readAt) {
+
+                  status.textContent =
+                    "✓✓";
+
+                  status.classList.add(
+                    "read"
+                  );
+
+                  status.title =
+                    "Sudah dibaca";
+
+                } else {
+
+                  status.textContent =
+                    "✓";
+
+                  status.title =
+                    "Terkirim";
+
+                }
+
+                meta.appendChild(
+                  status
+                );
+
+              }
+
+
+              bubble.appendChild(
+                text
+              );
+
+              bubble.appendChild(
+                meta
+              );
+
+              messageWrapper.appendChild(
+                bubble
+              );
+
+              chatBox.appendChild(
+                messageWrapper
+              );
+
+
+              // =========================
+              // UNREAD MESSAGE
+              // =========================
+
+              if (
+                !isMine &&
+                !message.readAt
+              ) {
+
+                unreadMessages.push(
+                  messageDoc.id
+                );
+
+              }
+
             }
-          `;
+          );
 
-          div.textContent = message.text;
 
-          chatBox.appendChild(div);
+          // =========================
+          // MARK AS READ
+          // =========================
 
-        });
+          if (
+            unreadMessages.length > 0
+          ) {
 
-        chatBox.scrollTop = chatBox.scrollHeight;
+            for (
+              const messageId
+              of unreadMessages
+            ) {
 
-      },
-      (error) => {
+              try {
 
-        console.error("CHAT ERROR:", error);
+                await updateDoc(
+                  doc(
+                    db,
+                    "conversations",
+                    convId,
+                    "messages",
+                    messageId
+                  ),
+                  {
+                    readAt:
+                      serverTimestamp()
+                  }
+                );
 
-        showError(
-          "❌ Gagal memuat chat: " +
-          error.message
-        );
+              } catch (error) {
 
-      }
-    );
+                console.error(
+                  "Read receipt error:",
+                  error
+                );
+
+              }
+
+            }
+
+          }
+
+
+          // =========================
+          // SCROLL
+          // =========================
+
+          requestAnimationFrame(
+            () => {
+
+              chatBox.scrollTop =
+                chatBox.scrollHeight;
+
+            }
+          );
+
+        },
+        (error) => {
+
+          console.error(
+            "CHAT ERROR:",
+            error
+          );
+
+          showError(
+            "Gagal memuat chat: " +
+            error.message
+          );
+
+        }
+      );
 
   } catch (error) {
 
     console.error(error);
 
     showError(
-      "❌ Gagal membuka percakapan: " +
-      error.message
+      "Gagal membuka chat."
     );
 
   }
@@ -663,108 +1032,136 @@ async function openChat(friend) {
 }
 
 
-// ===============================
+// =====================================================
 // SEND MESSAGE
-// ===============================
+// =====================================================
 
-sendChatBtn?.addEventListener("click", async () => {
+sendChatBtn?.addEventListener(
+  "click",
+  async () => {
 
-  const text = chatMessage.value.trim();
+    const text =
+      chatMessage.value.trim();
 
-  if (!text) return;
+    if (!text) return;
 
-  if (!selectedFriend) {
-    showError("Pilih teman terlebih dahulu.");
-    return;
+    if (!selectedFriend) {
+      showError(
+        "Pilih teman terlebih dahulu."
+      );
+      return;
+    }
+
+    if (text.length > 2000) {
+      showError(
+        "Pesan maksimal 2000 karakter."
+      );
+      return;
+    }
+
+    const convId =
+      conversationId(
+        currentUser.uid,
+        selectedFriend.uid
+      );
+
+    try {
+
+      await addDoc(
+        collection(
+          db,
+          "conversations",
+          convId,
+          "messages"
+        ),
+        {
+          senderUid:
+            currentUser.uid,
+
+          text: text,
+
+          createdAt:
+            serverTimestamp(),
+
+          readAt: null
+        }
+      );
+
+      await updateDoc(
+        doc(
+          db,
+          "conversations",
+          convId
+        ),
+        {
+          updatedAt:
+            serverTimestamp()
+        }
+      );
+
+      chatMessage.value = "";
+
+      chatMessage.focus();
+
+    } catch (error) {
+
+      console.error(error);
+
+      showError(
+        "Gagal mengirim pesan: " +
+        error.message
+      );
+
+    }
+
   }
+);
 
-  if (text.length > 2000) {
-    showError("Pesan maksimal 2000 karakter.");
-    return;
-  }
 
-  const convId = conversationId(
-    currentUser.uid,
-    selectedFriend.uid
-  );
+// =====================================================
+// ENTER SEND
+// =====================================================
 
-  try {
+chatMessage?.addEventListener(
+  "keydown",
+  (event) => {
 
-    await addDoc(
-      collection(
-        db,
-        "conversations",
-        convId,
-        "messages"
-      ),
-      {
-        senderUid: currentUser.uid,
-        text: text,
-        createdAt: serverTimestamp()
-      }
-    );
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey
+    ) {
 
-    await updateDoc(
-      doc(db, "conversations", convId),
-      {
-        updatedAt: serverTimestamp()
-      }
-    );
+      event.preventDefault();
 
-    chatMessage.value = "";
+      sendChatBtn.click();
 
-  } catch (error) {
-
-    console.error("SEND MESSAGE ERROR:", error);
-
-    showError(
-      "❌ Gagal mengirim pesan: " +
-      error.message
-    );
+    }
 
   }
-
-});
-
-
-// ===============================
-// ENTER UNTUK KIRIM
-// ===============================
-
-chatMessage?.addEventListener("keydown", (event) => {
-
-  if (event.key === "Enter" && !event.shiftKey) {
-
-    event.preventDefault();
-
-    sendChatBtn.click();
-
-  }
-
-});
+);
 
 
-// ===============================
+// =====================================================
 // LOGOUT
-// ===============================
+// =====================================================
 
-logoutBtn?.addEventListener("click", async () => {
+logoutBtn?.addEventListener(
+  "click",
+  async () => {
 
-  try {
+    try {
 
-    await signOut(auth);
+      await signOut(auth);
 
-    console.log("✅ Logout berhasil");
+    } catch (error) {
 
-  } catch (error) {
+      console.error(error);
 
-    console.error(error);
+      showError(
+        "Gagal keluar dari akun."
+      );
 
-    showError(
-      "❌ Gagal logout: " +
-      error.message
-    );
+    }
 
   }
-
-});
+);
