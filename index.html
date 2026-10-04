@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Wakied Chat</title>
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
+
+</head>
+
+
+<body>
+
+
+  <main class="app">
+
+
+    <!-- ==========================================
+         LOGIN / REGISTER
+    =========================================== -->
+
+    <section
+      id="authSection"
+      class="auth-section"
+    >
+
+      <div class="auth-card">
+
+
+        <div class="logo">
+
+          <div class="logo-icon">
+            💬
+          </div>
+
+          <h1>
+            WapBlog
+          </h1>
+
+          <p>
+            Chat dengan temanmu
+          </p>
+
+        </div>
+
+
+        <div class="auth-form">
+
+
+          <div class="input-group">
+
+            <label>
+              Username
+            </label>
+
+            <input
+              id="usernameAuth"
+              type="text"
+              placeholder="Masukkan username"
+              autocomplete="username"
+              maxlength="20"
+            >
+
+          </div>
+
+
+          <div class="input-group">
+
+            <label>
+              Password
+            </label>
+
+            <input
+              id="passwordAuth"
+              type="password"
+              placeholder="Masukkan password"
+              autocomplete="current-password"
+            >
+
+          </div>
+
+
+          <div class="auth-buttons">
+
+            <button
+              id="loginBtn"
+              class="btn btn-primary"
+            >
+              Masuk
+            </button>
+
+
+            <button
+              id="registerBtn"
+              class="btn btn-secondary"
+            >
+              Daftar
+            </button>
+
+          </div>
+
+
+        </div>
+
+
+      </div>
+
+    </section>
+
+
+
+    <!-- ==========================================
+         FRIEND SECTION
+    =========================================== -->
+
+    <section
+      id="friendSection"
+      class="friend-section"
+      style="display:none;"
+    >
+
+
+      <header class="app-header">
+
+
+        <div class="brand">
+
+          <div class="brand-icon">
+            💬
+          </div>
+
+
+          <div>
+
+            <h2>
+              WapBlog Chat
+            </h2>
+
+            <span>
+              Pesan pribadi
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <button
+          id="logoutBtn"
+          class="logout-btn"
+        >
+          Keluar
+        </button>
+
+
+      </header>
+
+
+
+      <div class="friend-add">
+
+
+        <div class="section-title">
+
+          <h3>
+            Teman
+          </h3>
+
+          <span>
+            Tambahkan teman dengan username
+          </span>
+
+        </div>
+
+
+        <div class="search-box">
+
+          <input
+            id="searchUser"
+            type="text"
+            placeholder="Cari username..."
+            maxlength="20"
+          >
+
+
+          <button
+            id="addFriendBtn"
+            class="btn btn-primary"
+          >
+            + Tambah
+          </button>
+
+        </div>
+
+
+      </div>
+
+
+
+      <div class="friend-container">
+
+        <ul
+          id="friendList"
+          class="friend-list"
+        >
+        </ul>
+
+      </div>
+
+
+    </section>
+
+
+
+    <!-- ==========================================
+         CHAT
+    =========================================== -->
+
+    <section
+      id="chatSection"
+      class="chat-section"
+      style="display:none;"
+    >
+
+
+      <header class="chat-header">
+
+
+        <div class="chat-user">
+
+
+          <div class="avatar">
+            👤
+          </div>
+
+
+          <div>
+
+            <strong
+              id="chatWithName"
+            >
+              Teman
+            </strong>
+
+            <span>
+              Chat pribadi
+            </span>
+
+          </div>
+
+
+        </div>
+
+
+      </header>
+
+
+
+      <div
+        id="chatBox"
+        class="chat-box"
+      >
+      </div>
+
+
+
+      <div class="chat-input-area">
+
+
+        <textarea
+          id="chatMessage"
+          placeholder="Tulis pesan..."
+          maxlength="2000"
+          rows="1"
+        ></textarea>
+
+
+        <button
+          id="sendChatBtn"
+          class="send-btn"
+          aria-label="Kirim pesan"
+        >
+          ➤
+        </button>
+
+
+      </div>
+
+
+    </section>
+
+
+  </main>
+
+
+  <script
+    type="module"
+    src="app.js"
+  ></script>
+
+
+</body>
+
+</html>
