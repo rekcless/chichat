@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
-
   <meta charset="UTF-8">
 
   <meta
@@ -10,261 +8,184 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>Wakied Chat</title>
+  <title>Chatting</title>
 
-  <link
-    rel="stylesheet"
-    href="style.css"
-  >
-
+  <link rel="stylesheet" href="./style.css">
 </head>
-
 
 <body>
 
+  <!-- =========================
+       AUTH
+  ========================== -->
 
-  <main class="app">
+  <main id="authSection" class="auth-section">
 
+    <div class="auth-card">
 
-    <!-- ==========================================
-         LOGIN / REGISTER
-    =========================================== -->
+      <div class="logo">
+        💬
+      </div>
 
-    <section
-      id="authSection"
-      class="auth-section"
-    >
+      <h1>Chatting</h1>
 
-      <div class="auth-card">
+      <p class="subtitle">
+        Chat dengan teman dengan mudah
+      </p>
 
+      <div class="form-group">
 
-        <div class="logo">
+        <label for="usernameAuth">
+          Username
+        </label>
 
-          <div class="logo-icon">
-            💬
-          </div>
-
-          <h1>
-            WapBlog
-          </h1>
-
-          <p>
-            Chat dengan temanmu
-          </p>
-
-        </div>
-
-
-        <div class="auth-form">
-
-
-          <div class="input-group">
-
-            <label>
-              Username
-            </label>
-
-            <input
-              id="usernameAuth"
-              type="text"
-              placeholder="Masukkan username"
-              autocomplete="username"
-              maxlength="20"
-            >
-
-          </div>
-
-
-          <div class="input-group">
-
-            <label>
-              Password
-            </label>
-
-            <input
-              id="passwordAuth"
-              type="password"
-              placeholder="Masukkan password"
-              autocomplete="current-password"
-            >
-
-          </div>
-
-
-          <div class="auth-buttons">
-
-            <button
-              id="loginBtn"
-              class="btn btn-primary"
-            >
-              Masuk
-            </button>
-
-
-            <button
-              id="registerBtn"
-              class="btn btn-secondary"
-            >
-              Daftar
-            </button>
-
-          </div>
-
-
-        </div>
-
+        <input
+          type="text"
+          id="usernameAuth"
+          placeholder="Masukkan username"
+          autocomplete="username"
+        >
 
       </div>
 
-    </section>
+
+      <div class="form-group">
+
+        <label for="passwordAuth">
+          Password
+        </label>
+
+        <input
+          type="password"
+          id="passwordAuth"
+          placeholder="Masukkan password"
+          autocomplete="current-password"
+        >
+
+      </div>
 
 
-
-    <!-- ==========================================
-         FRIEND SECTION
-    =========================================== -->
-
-    <section
-      id="friendSection"
-      class="friend-section"
-      style="display:none;"
-    >
-
-
-      <header class="app-header">
-
-
-        <div class="brand">
-
-          <div class="brand-icon">
-            💬
-          </div>
-
-
-          <div>
-
-            <h2>
-              WapBlog Chat
-            </h2>
-
-            <span>
-              Pesan pribadi
-            </span>
-
-          </div>
-
-        </div>
-
+      <div class="auth-buttons">
 
         <button
+          type="button"
+          id="loginBtn"
+          class="btn btn-primary"
+        >
+          Masuk
+        </button>
+
+        <button
+          type="button"
+          id="registerBtn"
+          class="btn btn-secondary"
+        >
+          Daftar
+        </button>
+
+      </div>
+
+      <p class="auth-info">
+        Belum punya akun? Klik <b>Daftar</b>
+      </p>
+
+    </div>
+
+  </main>
+
+
+  <!-- =========================
+       FRIEND SECTION
+  ========================== -->
+
+  <section
+    id="friendSection"
+    class="friend-section"
+    style="display:none;"
+  >
+
+    <div class="container">
+
+      <header class="topbar">
+
+        <div>
+          <h2>Chatting</h2>
+
+          <p>
+            Teman kamu
+          </p>
+        </div>
+
+        <button
+          type="button"
           id="logoutBtn"
           class="logout-btn"
         >
           Keluar
         </button>
 
-
       </header>
 
 
+      <div class="add-friend">
 
-      <div class="friend-add">
+        <input
+          type="text"
+          id="searchUser"
+          placeholder="Masukkan username teman..."
+        >
 
-
-        <div class="section-title">
-
-          <h3>
-            Teman
-          </h3>
-
-          <span>
-            Tambahkan teman dengan username
-          </span>
-
-        </div>
-
-
-        <div class="search-box">
-
-          <input
-            id="searchUser"
-            type="text"
-            placeholder="Cari username..."
-            maxlength="20"
-          >
-
-
-          <button
-            id="addFriendBtn"
-            class="btn btn-primary"
-          >
-            + Tambah
-          </button>
-
-        </div>
-
+        <button
+          type="button"
+          id="addFriendBtn"
+        >
+          + Tambah
+        </button>
 
       </div>
 
 
+      <div class="friends-card">
 
-      <div class="friend-container">
+        <h3>Daftar Teman</h3>
 
-        <ul
-          id="friendList"
-          class="friend-list"
-        >
+        <ul id="friendList">
         </ul>
 
       </div>
 
+    </div>
 
-    </section>
+  </section>
 
 
+  <!-- =========================
+       CHAT SECTION
+  ========================== -->
 
-    <!-- ==========================================
-         CHAT
-    =========================================== -->
+  <section
+    id="chatSection"
+    class="chat-section"
+    style="display:none;"
+  >
 
-    <section
-      id="chatSection"
-      class="chat-section"
-      style="display:none;"
-    >
-
+    <div class="chat-container">
 
       <header class="chat-header">
 
+        <div>
 
-        <div class="chat-user">
+          <span class="chat-label">
+            Sedang chat dengan
+          </span>
 
-
-          <div class="avatar">
-            👤
-          </div>
-
-
-          <div>
-
-            <strong
-              id="chatWithName"
-            >
-              Teman
-            </strong>
-
-            <span>
-              Chat pribadi
-            </span>
-
-          </div>
-
+          <h3 id="chatWithName">
+            -
+          </h3>
 
         </div>
 
-
       </header>
-
 
 
       <div
@@ -274,42 +195,33 @@
       </div>
 
 
-
-      <div class="chat-input-area">
-
+      <div class="chat-input">
 
         <textarea
           id="chatMessage"
           placeholder="Tulis pesan..."
-          maxlength="2000"
           rows="1"
         ></textarea>
 
-
         <button
+          type="button"
           id="sendChatBtn"
-          class="send-btn"
-          aria-label="Kirim pesan"
         >
           ➤
         </button>
 
-
       </div>
 
+    </div>
 
-    </section>
-
-
-  </main>
+  </section>
 
 
-  <script
-    type="module"
-    src="app.js"
-  ></script>
+  <!-- =========================
+       JAVASCRIPT
+  ========================== -->
 
+  <script type="module" src="./app.js"></script>
 
 </body>
-
 </html>
