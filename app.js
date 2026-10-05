@@ -21,7 +21,7 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-console.log("🔥 Chat app loaded");
+console.log("🔥 ChiChat app loaded");
 
 
 // =====================================================
@@ -55,9 +55,7 @@ const sendChatBtn = document.getElementById("sendChatBtn");
 
 let currentUser = null;
 let currentProfile = null;
-
 let selectedFriend = null;
-
 let unsubscribeMessages = null;
 
 
@@ -74,7 +72,7 @@ function cleanUsername(username) {
 
 
 function usernameToEmail(username) {
-  return `${username.toLowerCase().trim()}@chating-78345.firebaseapp.com`;
+  return `${username}@chating-78345.firebaseapp.com`;
 }
 
 
@@ -91,17 +89,23 @@ function showError(message) {
     box.id = "errorBox";
 
     box.style.cssText = `
-      position:fixed;
-      left:15px;
-      right:15px;
-      bottom:15px;
-      z-index:99999;
-      background:#fee2e2;
-      color:#991b1b;
-      padding:15px;
-      border-radius:14px;
-      font-size:14px;
-      box-shadow:0 10px 30px rgba(0,0,0,.15);
+      position: fixed;
+      left: 15px;
+      right: 15px;
+      bottom: 15px;
+      z-index: 99999;
+
+      background: #fee2e2;
+      color: #991b1b;
+
+      padding: 15px;
+      border-radius: 14px;
+
+      font-size: 14px;
+      line-height: 1.5;
+
+      box-shadow:
+        0 10px 30px rgba(0,0,0,.15);
     `;
 
     document.body.appendChild(box);
@@ -113,15 +117,17 @@ function showError(message) {
 
 function clearError() {
 
-  const box = document.getElementById("errorBox");
+  const box =
+    document.getElementById("errorBox");
 
-  if (box) box.remove();
-
+  if (box) {
+    box.remove();
+  }
 }
 
 
 // =====================================================
-// DATE FORMAT
+// DATE
 // =====================================================
 
 function getDateKey(timestamp) {
@@ -130,9 +136,10 @@ function getDateKey(timestamp) {
     return "";
   }
 
-  const date = timestamp.toDate
-    ? timestamp.toDate()
-    : new Date(timestamp);
+  const date =
+    timestamp.toDate
+      ? timestamp.toDate()
+      : new Date(timestamp);
 
   return [
     date.getFullYear(),
@@ -148,16 +155,17 @@ function formatDay(timestamp) {
     return "";
   }
 
-  const date = timestamp.toDate
-    ? timestamp.toDate()
-    : new Date(timestamp);
+  const date =
+    timestamp.toDate
+      ? timestamp.toDate()
+      : new Date(timestamp);
 
   const now = new Date();
 
-  const todayKey = getDateKey(now);
-  const messageKey = getDateKey(date);
-
-  if (messageKey === todayKey) {
+  if (
+    getDateKey(date) ===
+    getDateKey(now)
+  ) {
     return "Hari ini";
   }
 
@@ -167,7 +175,10 @@ function formatDay(timestamp) {
     yesterday.getDate() - 1
   );
 
-  if (messageKey === getDateKey(yesterday)) {
+  if (
+    getDateKey(date) ===
+    getDateKey(yesterday)
+  ) {
     return "Kemarin";
   }
 
@@ -189,9 +200,10 @@ function formatTime(timestamp) {
     return "";
   }
 
-  const date = timestamp.toDate
-    ? timestamp.toDate()
-    : new Date(timestamp);
+  const date =
+    timestamp.toDate
+      ? timestamp.toDate()
+      : new Date(timestamp);
 
   return date.toLocaleTimeString(
     "id-ID",
@@ -214,22 +226,30 @@ registerBtn?.addEventListener(
     clearError();
 
     const username =
-      cleanUsername(usernameAuth.value);
+      cleanUsername(
+        usernameAuth.value
+      );
 
     const password =
       passwordAuth.value;
 
     if (!username) {
-      showError("Username wajib diisi.");
+      showError(
+        "Username wajib diisi."
+      );
       return;
     }
 
     if (username.length < 3) {
-      showError("Username minimal 3 karakter.");
+      showError(
+        "Username minimal 3 karakter."
+      );
       return;
     }
 
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+    if (
+      !/^[a-zA-Z0-9_]+$/.test(username)
+    ) {
       showError(
         "Username hanya boleh huruf, angka, dan underscore."
       );
@@ -237,7 +257,9 @@ registerBtn?.addEventListener(
     }
 
     if (!password) {
-      showError("Password wajib diisi.");
+      showError(
+        "Password wajib diisi."
+      );
       return;
     }
 
@@ -248,16 +270,22 @@ registerBtn?.addEventListener(
       return;
     }
 
-    const email =
-      usernameToEmail(username);
-
     registerBtn.disabled = true;
-    registerBtn.textContent = "Mendaftar...";
+    registerBtn.textContent =
+      "Mendaftar...";
 
     try {
 
+      // ---------------------------------------------
+      // CEK USERNAME
+      // ---------------------------------------------
+
       const usernameRef =
-        doc(db, "usernames", username);
+        doc(
+          db,
+          "usernames",
+          username
+        );
 
       const usernameSnap =
         await getDoc(usernameRef);
@@ -267,6 +295,14 @@ registerBtn?.addEventListener(
           "Username sudah digunakan."
         );
       }
+
+
+      // ---------------------------------------------
+      // CREATE FIREBASE AUTH
+      // ---------------------------------------------
+
+      const email =
+        usernameToEmail(username);
 
       const credential =
         await createUserWithEmailAndPassword(
@@ -278,22 +314,42 @@ registerBtn?.addEventListener(
       const uid =
         credential.user.uid;
 
+
+      // ---------------------------------------------
+      // CREATE USER PROFILE
+      // ---------------------------------------------
+
       await setDoc(
-        doc(db, "users", uid),
+        doc(
+          db,
+          "users",
+          uid
+        ),
         {
           uid: uid,
           username: username,
           friends: [],
-          createdAt: serverTimestamp()
+          createdAt:
+            serverTimestamp()
         }
       );
 
+
+      // ---------------------------------------------
+      // SAVE USERNAME
+      // ---------------------------------------------
+
       await setDoc(
-        doc(db, "usernames", username),
+        doc(
+          db,
+          "usernames",
+          username
+        ),
         {
           uid: uid
         }
       );
+
 
       alert(
         "Pendaftaran berhasil!"
@@ -304,17 +360,40 @@ registerBtn?.addEventListener(
 
     } catch (error) {
 
-      console.error(error);
+      console.error(
+        "REGISTER ERROR:",
+        error
+      );
+
+      let message =
+        error.message;
+
+      if (
+        error.code ===
+        "auth/email-already-in-use"
+      ) {
+        message =
+          "Username tersebut sudah digunakan.";
+      }
+
+      if (
+        error.code ===
+        "auth/network-request-failed"
+      ) {
+        message =
+          "Koneksi internet bermasalah.";
+      }
 
       showError(
-        "❌ " + error.message
+        "❌ " + message
       );
 
     } finally {
 
       registerBtn.disabled = false;
-      registerBtn.textContent = "Daftar";
 
+      registerBtn.textContent =
+        "Daftar";
     }
 
   }
@@ -332,28 +411,36 @@ loginBtn?.addEventListener(
     clearError();
 
     const username =
-      cleanUsername(usernameAuth.value);
+      cleanUsername(
+        usernameAuth.value
+      );
 
     const password =
       passwordAuth.value;
 
     if (!username) {
-      showError("Username wajib diisi.");
+      showError(
+        "Username wajib diisi."
+      );
       return;
     }
 
     if (!password) {
-      showError("Password wajib diisi.");
+      showError(
+        "Password wajib diisi."
+      );
       return;
     }
 
-    const email =
-      usernameToEmail(username);
-
     loginBtn.disabled = true;
-    loginBtn.textContent = "Masuk...";
+
+    loginBtn.textContent =
+      "Masuk...";
 
     try {
+
+      const email =
+        usernameToEmail(username);
 
       await signInWithEmailAndPassword(
         auth,
@@ -363,7 +450,10 @@ loginBtn?.addEventListener(
 
     } catch (error) {
 
-      console.error(error);
+      console.error(
+        "LOGIN ERROR:",
+        error
+      );
 
       let message =
         "Username atau password salah.";
@@ -376,13 +466,16 @@ loginBtn?.addEventListener(
           "Koneksi internet bermasalah.";
       }
 
-      showError("❌ " + message);
+      showError(
+        "❌ " + message
+      );
 
     } finally {
 
       loginBtn.disabled = false;
-      loginBtn.textContent = "Masuk";
 
+      loginBtn.textContent =
+        "Masuk";
     }
 
   }
@@ -401,6 +494,12 @@ onAuthStateChanged(
 
       currentUser = null;
       currentProfile = null;
+      selectedFriend = null;
+
+      if (unsubscribeMessages) {
+        unsubscribeMessages();
+        unsubscribeMessages = null;
+      }
 
       authSection.style.display =
         "flex";
@@ -414,6 +513,7 @@ onAuthStateChanged(
       return;
     }
 
+
     currentUser = user;
 
     authSection.style.display =
@@ -425,33 +525,46 @@ onAuthStateChanged(
     chatSection.style.display =
       "none";
 
+
     try {
+
+      const profileRef =
+        doc(
+          db,
+          "users",
+          user.uid
+        );
 
       const profileSnap =
         await getDoc(
-          doc(db, "users", user.uid)
+          profileRef
         );
 
       if (!profileSnap.exists()) {
+
         showError(
           "Profile user tidak ditemukan."
         );
+
         return;
       }
 
       currentProfile =
         profileSnap.data();
 
-      loadFriends();
+      await loadFriends();
 
     } catch (error) {
 
-      console.error(error);
-
-      showError(
-        "Gagal memuat profile."
+      console.error(
+        "PROFILE ERROR:",
+        error
       );
 
+      showError(
+        "Gagal memuat profile: " +
+        error.message
+      );
     }
 
   }
@@ -469,6 +582,7 @@ async function loadFriends() {
   const friends =
     currentProfile?.friends || [];
 
+
   if (friends.length === 0) {
 
     friendList.innerHTML = `
@@ -480,25 +594,39 @@ async function loadFriends() {
     return;
   }
 
+
   for (const uid of friends) {
 
     try {
 
       const snap =
         await getDoc(
-          doc(db, "users", uid)
+          doc(
+            db,
+            "users",
+            uid
+          )
         );
 
-      if (!snap.exists()) continue;
+      if (!snap.exists()) {
+        continue;
+      }
 
       const friend =
         snap.data();
 
+
       const li =
-        document.createElement("li");
+        document.createElement(
+          "li"
+        );
+
 
       li.innerHTML = `
-        <button class="friend-item">
+        <button
+          class="friend-item"
+          type="button"
+        >
 
           <span class="friend-avatar">
             ${friend.username
@@ -507,6 +635,7 @@ async function loadFriends() {
           </span>
 
           <span class="friend-info">
+
             <strong>
               ${friend.username}
             </strong>
@@ -514,6 +643,7 @@ async function loadFriends() {
             <small>
               Klik untuk membuka chat
             </small>
+
           </span>
 
           <span class="friend-arrow">
@@ -523,6 +653,7 @@ async function loadFriends() {
         </button>
       `;
 
+
       li.querySelector(
         ".friend-item"
       ).addEventListener(
@@ -531,17 +662,22 @@ async function loadFriends() {
 
           openChat({
             uid: uid,
-            username: friend.username
+            username:
+              friend.username
           });
 
         }
       );
 
+
       friendList.appendChild(li);
 
     } catch (error) {
 
-      console.error(error);
+      console.error(
+        "FRIEND LOAD ERROR:",
+        error
+      );
 
     }
 
@@ -561,31 +697,49 @@ addFriendBtn?.addEventListener(
     clearError();
 
     const username =
-      cleanUsername(searchUser.value);
+      cleanUsername(
+        searchUser.value
+      );
+
 
     if (!username) {
+
       showError(
         "Masukkan username teman."
       );
+
       return;
     }
+
 
     if (
       username ===
       currentProfile.username
     ) {
+
       showError(
         "Kamu tidak bisa menambahkan diri sendiri."
       );
+
       return;
     }
 
+
     try {
+
+      // ---------------------------------------------
+      // CARI USERNAME
+      // ---------------------------------------------
 
       const usernameSnap =
         await getDoc(
-          doc(db, "usernames", username)
+          doc(
+            db,
+            "usernames",
+            username
+          )
         );
+
 
       if (!usernameSnap.exists()) {
 
@@ -596,24 +750,71 @@ addFriendBtn?.addEventListener(
         return;
       }
 
+
       const friendUid =
         usernameSnap.data().uid;
 
+
+      // ---------------------------------------------
+      // CEK SUDAH TEMAN ATAU BELUM
+      // ---------------------------------------------
+
+      const currentFriends =
+        currentProfile.friends || [];
+
+      if (
+        currentFriends.includes(
+          friendUid
+        )
+      ) {
+
+        showError(
+          "User tersebut sudah ada di daftar teman."
+        );
+
+        return;
+      }
+
+
+      // ---------------------------------------------
+      // TAMBAHKAN KE USER SENDIRI
+      // ---------------------------------------------
+
       await updateDoc(
-        doc(db, "users", currentUser.uid),
+        doc(
+          db,
+          "users",
+          currentUser.uid
+        ),
         {
           friends:
             arrayUnion(friendUid)
         }
       );
 
+
+      // ---------------------------------------------
+      // TAMBAHKAN KE USER TEMAN
+      // ---------------------------------------------
+
       await updateDoc(
-        doc(db, "users", friendUid),
+        doc(
+          db,
+          "users",
+          friendUid
+        ),
         {
           friends:
-            arrayUnion(currentUser.uid)
+            arrayUnion(
+              currentUser.uid
+            )
         }
       );
+
+
+      // ---------------------------------------------
+      // UPDATE LOCAL PROFILE
+      // ---------------------------------------------
 
       currentProfile.friends =
         Array.from(
@@ -623,20 +824,27 @@ addFriendBtn?.addEventListener(
           ])
         );
 
+
       searchUser.value = "";
+
 
       alert(
         "Teman berhasil ditambahkan!"
       );
 
-      loadFriends();
+
+      await loadFriends();
 
     } catch (error) {
 
-      console.error(error);
+      console.error(
+        "ADD FRIEND ERROR:",
+        error
+      );
 
       showError(
-        "Gagal menambahkan teman."
+        "❌ Gagal menambahkan teman: " +
+        error.message
       );
 
     }
@@ -665,18 +873,77 @@ function conversationId(
 
 
 // =====================================================
+// CREATE / GET CONVERSATION
+// =====================================================
+
+async function ensureConversation(
+  friendUid
+) {
+
+  const convId =
+    conversationId(
+      currentUser.uid,
+      friendUid
+    );
+
+  const convRef =
+    doc(
+      db,
+      "conversations",
+      convId
+    );
+
+  const snap =
+    await getDoc(
+      convRef
+    );
+
+
+  if (!snap.exists()) {
+
+    await setDoc(
+      convRef,
+      {
+        participants: [
+          currentUser.uid,
+          friendUid
+        ],
+
+        updatedAt:
+          serverTimestamp()
+      }
+    );
+
+  }
+
+
+  return {
+    id: convId,
+    ref: convRef
+  };
+
+}
+
+
+// =====================================================
 // OPEN CHAT
 // =====================================================
 
 async function openChat(friend) {
 
-  selectedFriend = friend;
+  clearError();
+
+  selectedFriend =
+    friend;
+
 
   chatSection.style.display =
     "block";
 
+
   chatWithName.textContent =
     friend.username;
+
 
   chatBox.innerHTML = `
     <div class="chat-loading">
@@ -684,53 +951,31 @@ async function openChat(friend) {
     </div>
   `;
 
+
   if (unsubscribeMessages) {
+
     unsubscribeMessages();
+
+    unsubscribeMessages = null;
   }
 
-  const convId =
-    conversationId(
-      currentUser.uid,
-      friend.uid
-    );
-
-  const conversationRef =
-    doc(
-      db,
-      "conversations",
-      convId
-    );
 
   try {
 
-    const snap =
-      await getDoc(
-        conversationRef
+    const conversation =
+      await ensureConversation(
+        friend.uid
       );
 
-    if (!snap.exists()) {
-
-      await setDoc(
-        conversationRef,
-        {
-          participants: [
-            currentUser.uid,
-            friend.uid
-          ],
-          updatedAt:
-            serverTimestamp()
-        }
-      );
-
-    }
 
     const messagesRef =
       collection(
         db,
         "conversations",
-        convId,
+        conversation.id,
         "messages"
       );
+
 
     const messagesQuery =
       query(
@@ -741,9 +986,11 @@ async function openChat(friend) {
         )
       );
 
+
     unsubscribeMessages =
       onSnapshot(
         messagesQuery,
+
         async (snapshot) => {
 
           chatBox.innerHTML = "";
@@ -752,38 +999,49 @@ async function openChat(friend) {
 
           const unreadMessages = [];
 
+
+          // -----------------------------------------
+          // MESSAGES
+          // -----------------------------------------
+
           snapshot.forEach(
             (messageDoc) => {
 
               const message =
                 messageDoc.data();
 
+
+              // Server timestamp kadang belum selesai.
+              // Jangan crash kalau timestamp masih null.
               const messageDate =
                 message.createdAt;
+
 
               const dateKey =
                 getDateKey(
                   messageDate
                 );
 
-              // =========================
-              // DATE SEPARATOR
-              // =========================
+
+              // ---------------------------------------
+              // DATE DIVIDER
+              // ---------------------------------------
 
               if (
-                dateKey !==
-                previousDate
+                dateKey &&
+                dateKey !== previousDate
               ) {
 
-                const dateDivider =
+                const divider =
                   document.createElement(
                     "div"
                   );
 
-                dateDivider.className =
+                divider.className =
                   "date-divider";
 
-                dateDivider.innerHTML = `
+
+                divider.innerHTML = `
                   <span>
                     ${formatDay(
                       messageDate
@@ -791,29 +1049,33 @@ async function openChat(friend) {
                   </span>
                 `;
 
+
                 chatBox.appendChild(
-                  dateDivider
+                  divider
                 );
+
 
                 previousDate =
                   dateKey;
               }
 
 
-              // =========================
+              // ---------------------------------------
               // MESSAGE
-              // =========================
+              // ---------------------------------------
 
               const isMine =
                 message.senderUid ===
                 currentUser.uid;
 
-              const messageWrapper =
+
+              const row =
                 document.createElement(
                   "div"
                 );
 
-              messageWrapper.className =
+
+              row.className =
                 isMine
                   ? "message-row mine"
                   : "message-row theirs";
@@ -824,6 +1086,7 @@ async function openChat(friend) {
                   "div"
                 );
 
+
               bubble.className =
                 "message-bubble";
 
@@ -833,17 +1096,24 @@ async function openChat(friend) {
                   "div"
                 );
 
+
               text.className =
                 "message-text";
 
-              text.textContent =
-                message.text;
 
+              text.textContent =
+                message.text || "";
+
+
+              // ---------------------------------------
+              // META
+              // ---------------------------------------
 
               const meta =
                 document.createElement(
                   "div"
                 );
+
 
               meta.className =
                 "message-meta";
@@ -854,13 +1124,23 @@ async function openChat(friend) {
                   "span"
                 );
 
+
               time.className =
                 "message-time";
 
-              time.textContent =
-                formatTime(
-                  message.createdAt
-                );
+
+              if (message.createdAt) {
+
+                time.textContent =
+                  formatTime(
+                    message.createdAt
+                  );
+
+              } else {
+
+                time.textContent =
+                  "...";
+              }
 
 
               meta.appendChild(
@@ -868,9 +1148,9 @@ async function openChat(friend) {
               );
 
 
-              // =========================
-              // READ RECEIPT
-              // =========================
+              // ---------------------------------------
+              // STATUS
+              // ---------------------------------------
 
               if (isMine) {
 
@@ -879,8 +1159,10 @@ async function openChat(friend) {
                     "span"
                   );
 
+
                 status.className =
                   "message-status";
+
 
                 if (message.readAt) {
 
@@ -901,13 +1183,12 @@ async function openChat(friend) {
 
                   status.title =
                     "Terkirim";
-
                 }
+
 
                 meta.appendChild(
                   status
                 );
-
               }
 
 
@@ -919,18 +1200,20 @@ async function openChat(friend) {
                 meta
               );
 
-              messageWrapper.appendChild(
+
+              row.appendChild(
                 bubble
               );
 
+
               chatBox.appendChild(
-                messageWrapper
+                row
               );
 
 
-              // =========================
-              // UNREAD MESSAGE
-              // =========================
+              // ---------------------------------------
+              // UNREAD
+              // ---------------------------------------
 
               if (
                 !isMine &&
@@ -940,16 +1223,15 @@ async function openChat(friend) {
                 unreadMessages.push(
                   messageDoc.id
                 );
-
               }
 
             }
           );
 
 
-          // =========================
+          // -----------------------------------------
           // MARK AS READ
-          // =========================
+          // -----------------------------------------
 
           if (
             unreadMessages.length > 0
@@ -966,7 +1248,7 @@ async function openChat(friend) {
                   doc(
                     db,
                     "conversations",
-                    convId,
+                    conversation.id,
                     "messages",
                     messageId
                   ),
@@ -979,20 +1261,19 @@ async function openChat(friend) {
               } catch (error) {
 
                 console.error(
-                  "Read receipt error:",
+                  "READ RECEIPT ERROR:",
                   error
                 );
 
               }
 
             }
-
           }
 
 
-          // =========================
-          // SCROLL
-          // =========================
+          // -----------------------------------------
+          // AUTO SCROLL
+          // -----------------------------------------
 
           requestAnimationFrame(
             () => {
@@ -1004,12 +1285,14 @@ async function openChat(friend) {
           );
 
         },
+
         (error) => {
 
           console.error(
-            "CHAT ERROR:",
+            "CHAT SNAPSHOT ERROR:",
             error
           );
+
 
           showError(
             "Gagal memuat chat: " +
@@ -1019,12 +1302,18 @@ async function openChat(friend) {
         }
       );
 
+
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "OPEN CHAT ERROR:",
+      error
+    );
+
 
     showError(
-      "Gagal membuka chat."
+      "❌ Gagal membuka chat: " +
+      error.message
     );
 
   }
@@ -1040,77 +1329,134 @@ sendChatBtn?.addEventListener(
   "click",
   async () => {
 
+    clearError();
+
+
     const text =
       chatMessage.value.trim();
 
-    if (!text) return;
+
+    if (!text) {
+      return;
+    }
+
+
+    if (!currentUser) {
+
+      showError(
+        "Kamu belum login."
+      );
+
+      return;
+    }
+
 
     if (!selectedFriend) {
+
       showError(
         "Pilih teman terlebih dahulu."
       );
+
       return;
     }
 
+
     if (text.length > 2000) {
+
       showError(
         "Pesan maksimal 2000 karakter."
       );
+
       return;
     }
 
-    const convId =
-      conversationId(
-        currentUser.uid,
-        selectedFriend.uid
-      );
+
+    // -----------------------------------------------
+    // DISABLE BUTTON
+    // -----------------------------------------------
+
+    sendChatBtn.disabled = true;
+
 
     try {
 
-      await addDoc(
-        collection(
-          db,
-          "conversations",
-          convId,
-          "messages"
-        ),
-        {
-          senderUid:
-            currentUser.uid,
+      // ---------------------------------------------
+      // PASTIKAN CONVERSATION ADA
+      // ---------------------------------------------
 
-          text: text,
+      const conversation =
+        await ensureConversation(
+          selectedFriend.uid
+        );
 
-          createdAt:
-            serverTimestamp(),
 
-          readAt: null
-        }
-      );
+      // ---------------------------------------------
+      // UPDATE CONVERSATION
+      // ---------------------------------------------
 
       await updateDoc(
-        doc(
-          db,
-          "conversations",
-          convId
-        ),
+        conversation.ref,
         {
           updatedAt:
             serverTimestamp()
         }
       );
 
+
+      // ---------------------------------------------
+      // KIRIM PESAN
+      // ---------------------------------------------
+
+      await addDoc(
+        collection(
+          db,
+          "conversations",
+          conversation.id,
+          "messages"
+        ),
+        {
+          senderUid:
+            currentUser.uid,
+
+          text:
+            text,
+
+          createdAt:
+            serverTimestamp(),
+
+          readAt:
+            null
+        }
+      );
+
+
+      // ---------------------------------------------
+      // CLEAR INPUT
+      // ---------------------------------------------
+
       chatMessage.value = "";
 
       chatMessage.focus();
 
+
     } catch (error) {
 
-      console.error(error);
+      console.error(
+        "SEND MESSAGE ERROR:",
+        error
+      );
+
 
       showError(
-        "Gagal mengirim pesan: " +
+        "❌ Gagal mengirim pesan: " +
         error.message
       );
+
+
+    } finally {
+
+      sendChatBtn.disabled =
+        false;
 
     }
 
@@ -1119,7 +1465,7 @@ sendChatBtn?.addEventListener(
 
 
 // =====================================================
-// ENTER SEND
+// ENTER = SEND
 // =====================================================
 
 chatMessage?.addEventListener(
@@ -1136,7 +1482,6 @@ chatMessage?.addEventListener(
       sendChatBtn.click();
 
     }
-
   }
 );
 
@@ -1149,18 +1494,23 @@ logoutBtn?.addEventListener(
   "click",
   async () => {
 
+    clearError();
+
     try {
 
       await signOut(auth);
 
     } catch (error) {
 
-      console.error(error);
-
-      showError(
-        "Gagal keluar dari akun."
+      console.error(
+        "LOGOUT ERROR:",
+        error
       );
 
+      showError(
+        "❌ Gagal keluar dari akun: " +
+        error.message
+      );
     }
 
   }
